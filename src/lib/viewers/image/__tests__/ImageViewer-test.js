@@ -322,6 +322,15 @@ describe('lib/viewers/image/ImageViewer', () => {
             expect(stubs.emit).toBeCalledWith('rotate');
             expect(stubs.orientChange).toBeCalled();
         });
+
+        test('should re-scale using the rendered offset width and height', () => {
+            Object.defineProperty(image.imageEl, 'offsetWidth', { value: 200, writable: true });
+            Object.defineProperty(image.imageEl, 'offsetHeight', { value: 150, writable: true });
+
+            image.rotateLeft();
+
+            expect(stubs.scale).toBeCalledWith(200, 150);
+        });
     });
 
     describe('zoom()', () => {
@@ -438,6 +447,36 @@ describe('lib/viewers/image/ImageViewer', () => {
                 rotationAngle: expect.any(Number),
             });
             expect(image.renderUI).toBeCalled();
+        });
+
+        test('should derive the scale from the width when a width is given', () => {
+            jest.spyOn(image, 'emit');
+            jest.spyOn(image, 'renderUI').mockImplementation();
+            image.imageEl.setAttribute('originalWidth', '100');
+            image.imageEl.setAttribute('originalHeight', '200');
+
+            image.setScale(150, 250);
+
+            expect(image.scale).toBe(1.5);
+            expect(image.emit).toBeCalledWith('scale', {
+                scale: 1.5,
+                rotationAngle: expect.any(Number),
+            });
+        });
+
+        test('should fall back to the height when no width is given', () => {
+            jest.spyOn(image, 'emit');
+            jest.spyOn(image, 'renderUI').mockImplementation();
+            image.imageEl.setAttribute('originalWidth', '100');
+            image.imageEl.setAttribute('originalHeight', '200');
+
+            image.setScale(undefined, 250);
+
+            expect(image.scale).toBe(1.25);
+            expect(image.emit).toBeCalledWith('scale', {
+                scale: 1.25,
+                rotationAngle: expect.any(Number),
+            });
         });
     });
 
